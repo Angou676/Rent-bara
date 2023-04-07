@@ -8,7 +8,11 @@ function App() {
     <div className="App" style={{ marginTop: '30px' }}>
 
       Trial
-      <Route path="/:message" element={<Home />} />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/:message" element={<Home />} />
+        </Routes>
+      </BrowserRouter>
     </div>
   );
 }
