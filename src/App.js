@@ -4,7 +4,7 @@ import Home from './Home';
 
 function App() {
   return (
-    <div className="App" style={{ marginTop: '100px', border: '1px solid green' }}>
+    <div className="App" style={{ marginTop: '100px', border: '3px solid yellow' }}>
       Trial
       <BrowserRouter>
         <Routes>
