@@ -8,7 +8,7 @@ function App() {
       Trial
       <BrowserRouter>
         <Routes>
-          <Route path="/:message" element={<Home />} />
+          <Route path="/:id/:lat/:long" element={<Home />} />
 
         </Routes>
       </BrowserRouter>

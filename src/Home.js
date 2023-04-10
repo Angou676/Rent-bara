@@ -2,9 +2,9 @@ import React from 'react'
 import { useLocation } from 'react-router-dom'
 
 const Home = () => {
-    console.log(useLocation())
+    console.log(useLocation().pathname)
     return (
-        <div>Home</div>
+        <div>Home {useLocation().pathname}</div>
     )
 }
 
