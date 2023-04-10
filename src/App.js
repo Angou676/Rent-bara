@@ -4,11 +4,11 @@ import Home from './Home';
 
 function App() {
   return (
-    <div className="App" style={{ marginTop: '100px', border: '3px solid yellow' }}>
+    <div className="App" style={{ marginTop: '100px', border: '3px solid blue' }}>
       Trial
       <BrowserRouter>
         <Routes>
-          <Route path="/:id/:lat/:long" element={<Home />} />
+          <Route path="/:id/:lat/:long" exact element={<Home />} />
 
         </Routes>
       </BrowserRouter>
