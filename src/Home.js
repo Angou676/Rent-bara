@@ -1,10 +1,12 @@
 import React from 'react'
-import { useLocation } from 'react-router-dom'
+import { useParams } from "react-router-dom";
+
+
 
 const Home = () => {
-    console.log(useLocation().pathname)
+    const { id, lat, long } = useParams();
     return (
-        <div>Home {useLocation().pathname}</div>
+        <div>Home {id} {lat} {long}</div>
     )
 }
 

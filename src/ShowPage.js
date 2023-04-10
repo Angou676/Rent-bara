@@ -1,9 +1,10 @@
 import React from 'react'
-import { useLocation } from 'react-router-dom'
+import { useParams } from "react-router-dom";
 
 const ShowPage = () => {
+    const { id, lat, long } = useParams();
     return (
-        <div>ShowPage here {useLocation().pathname}</div>
+        <div>ShowPage here {id} {lat} {long}</div>
     )
 }
 
