@@ -1,65 +1,56 @@
-import React, { useState, useRef } from "react";
-import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
+import React, { useState, useEffect, useRef } from 'react';
 
-const Reel = () => {
-    const [isRecording, setIsRecording] = useState(false);
-    const [recordedVideoUrl, setRecordedVideoUrl] = useState("");
-    const [filteredVideoUrl, setFilteredVideoUrl] = useState("");
-    const videoRef = useRef(null);
-    const chunks = [];
+function Reel() {
+  const [stream, setStream] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const [chunks, setChunks] = useState([]);
+  const videoRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
 
+  useEffect(() => {
+    async function getMedia() {
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setStream(mediaStream);
+        videoRef.current.srcObject = mediaStream;
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+      }
+    }
+    getMedia();
+  }, []);
 
-    const startRecording = () => {
-        setIsRecording(true);
-        setRecordedVideoUrl("");
-        setFilteredVideoUrl("");
-        navigator.mediaDevices
-            .getUserMedia({ video: true, audio: true })
-            .then((stream) => {
-                videoRef.current.srcObject = stream;
-                videoRef.current.play();
-            });
-    };
+  const startRecording = () => {
+    if (!stream) return;
+    const mediaRecorder = new MediaRecorder(stream);
+    setChunks([]);
+    mediaRecorder.addEventListener('dataavailable', (event) => {
+      if (event.data.size > 0) {
+        setChunks((prevChunks) => [...prevChunks, event.data]);
+      }
+    });
+    setRecording(true);
+    mediaRecorderRef.current = mediaRecorder;
+    mediaRecorder.start();
+  };
 
-    const stopRecording = async () => {
-        setIsRecording(false);
-        const stream = videoRef.current.srcObject;
-        const tracks = stream.getTracks();
-        tracks.forEach((track) => track.stop());
-        videoRef.current.srcObject = null;
-        const recordedVideoData = new Blob(chunks, { type: "video/webm" });
-        const recordedVideoUrl = URL.createObjectURL(recordedVideoData);
-        setRecordedVideoUrl(recordedVideoUrl);
-        await applyFilter("negate");
-    };
+  const stopRecording = () => {
+    if (!mediaRecorderRef.current) return;
+    if (!recording) return;
+    mediaRecorderRef.current.stop();
+    setRecording(false);
+    const videoBlob = new Blob(chunks, { type: 'video/mp4' });
+    const videoUrl = URL.createObjectURL(videoBlob);
+    console.log('Video URL:', videoUrl);
+  };
 
-    const applyFilter = async (filterType) => {
-        const ffmpeg = createFFmpeg({ log: true });
-        await ffmpeg.load();
-        ffmpeg.FS("writeFile", "input.webm", await fetchFile(recordedVideoUrl));
-        await ffmpeg.run("-i", "input.webm", "-vf", filterType, "output.webm");
-        const filteredVideoData = ffmpeg.FS("readFile", "output.webm");
-        const filteredVideoUrl = URL.createObjectURL(
-            new Blob([filteredVideoData.buffer], { type: "video/webm" })
-        );
-        setFilteredVideoUrl(filteredVideoUrl);
-    };
-
-    return (
-        <div>
-            <video ref={videoRef} width="640" height="480" muted></video>
-            {!isRecording && (
-                <button onClick={startRecording}>Start Recording</button>
-            )}
-            {isRecording && <button onClick={stopRecording}>Stop Recording</button>}
-            {recordedVideoUrl && (
-                <video src={recordedVideoUrl} width="640" height="480" controls></video>
-            )}
-            {filteredVideoUrl && (
-                <video src={filteredVideoUrl} width="640" height="480" controls></video>
-            )}
-        </div>
-    );
-};
+  return (
+    <div>
+      <video ref={videoRef} autoPlay muted />
+      <button onClick={startRecording}>Start Recording</button>
+      <button onClick={stopRecording}>Stop Recording</button>
+    </div>
+  );
+}
 
 export default Reel;
