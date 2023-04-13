@@ -9,7 +9,7 @@ const Reel = () => {
     };
 
     const handleVideoPreview = (videoBlob) => {
-        // do something with the videoBlob, like uploading it to a server or displaying it in a preview window
+        // do something with the videoBlob, like uploading it to a server or displaying it in a preview 
     };
 
     return (
