@@ -1,60 +1,65 @@
-import React, { useState } from 'react';
-import VideoRecorder from 'react-video-recorder';
+import React, { useState, useRef } from "react";
+import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 
 const Reel = () => {
-  const [selectedFilter, setSelectedFilter] = useState(null);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordedVideoUrl, setRecordedVideoUrl] = useState("");
+    const [filteredVideoUrl, setFilteredVideoUrl] = useState("");
+    const videoRef = useRef(null);
+    const chunks = [];
 
-  const handleFilterChange = (filter) => {
-    setSelectedFilter(filter);
-  };
 
-  const handleVideoPreview = (videoBlob) => {
-    // do something with the videoBlob, like uploading it to a server or displaying it in a preview window
-  };
+    const startRecording = () => {
+        setIsRecording(true);
+        setRecordedVideoUrl("");
+        setFilteredVideoUrl("");
+        navigator.mediaDevices
+            .getUserMedia({ video: true, audio: true })
+            .then((stream) => {
+                videoRef.current.srcObject = stream;
+                videoRef.current.play();
+            });
+    };
 
-  return (
-    <div>
-      <VideoRecorder
-        onRecordingComplete={handleVideoPreview}
-        renderVideoInput={({ videoInputRef }) => (
-          <video
-            ref={videoInputRef}
-            autoPlay
-            playsInline
-            muted
-            onPlaying={() => {
-              const videoElement = videoInputRef.current;
-              const canvasElement = document.createElement('canvas');
-              canvasElement.width = videoElement.videoWidth;
-              canvasElement.height = videoElement.videoHeight;
-              const canvasContext = canvasElement.getContext('2d');
-              const filter = selectedFilter;
-              if (filter) {
-                canvasContext.filter = filter;
-              }
-              setInterval(() => {
-                canvasContext.drawImage(videoElement, 0, 0);
-                const imageData = canvasContext.getImageData(
-                  0,
-                  0,
-                  videoElement.videoWidth,
-                  videoElement.videoHeight
-                );
-                canvasContext.putImageData(imageData, 0, 0);
-              }, 16);
-            }}
-          />
-        )}
-      />
-      <div>
-        <button onClick={() => handleFilterChange('blur(5px)')}>Blur</button>
-        <button onClick={() => handleFilterChange('grayscale(100%)')}>
-          Grayscale
-        </button>
-        <button onClick={() => handleFilterChange(null)}>Clear Filter</button>
-      </div>
-    </div>
-  );
+    const stopRecording = async () => {
+        setIsRecording(false);
+        const stream = videoRef.current.srcObject;
+        const tracks = stream.getTracks();
+        tracks.forEach((track) => track.stop());
+        videoRef.current.srcObject = null;
+        const recordedVideoData = new Blob(chunks, { type: "video/webm" });
+        const recordedVideoUrl = URL.createObjectURL(recordedVideoData);
+        setRecordedVideoUrl(recordedVideoUrl);
+        await applyFilter("negate");
+    };
+
+    const applyFilter = async (filterType) => {
+        const ffmpeg = createFFmpeg({ log: true });
+        await ffmpeg.load();
+        ffmpeg.FS("writeFile", "input.webm", await fetchFile(recordedVideoUrl));
+        await ffmpeg.run("-i", "input.webm", "-vf", filterType, "output.webm");
+        const filteredVideoData = ffmpeg.FS("readFile", "output.webm");
+        const filteredVideoUrl = URL.createObjectURL(
+            new Blob([filteredVideoData.buffer], { type: "video/webm" })
+        );
+        setFilteredVideoUrl(filteredVideoUrl);
+    };
+
+    return (
+        <div>
+            <video ref={videoRef} width="640" height="480" muted></video>
+            {!isRecording && (
+                <button onClick={startRecording}>Start Recording</button>
+            )}
+            {isRecording && <button onClick={stopRecording}>Stop Recording</button>}
+            {recordedVideoUrl && (
+                <video src={recordedVideoUrl} width="640" height="480" controls></video>
+            )}
+            {filteredVideoUrl && (
+                <video src={filteredVideoUrl} width="640" height="480" controls></video>
+            )}
+        </div>
+    );
 };
 
 export default Reel;
