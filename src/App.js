@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './Home';
 import Trial from './Trial';
 import ShowPage from './ShowPage';
+import Reel from './Reel';
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
           <Route path="/" exact element={<Trial />} />
           <Route path="/:id/:lat/:long" exact element={<Home />} />
           <Route path="/show/:id/:lat/:long" exact element={<ShowPage />} />
+          <Route path="/reel" exact element={<Reel />} />
 
         </Routes>
       </BrowserRouter>
